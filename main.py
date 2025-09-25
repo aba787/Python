@@ -44,9 +44,7 @@ def main():
     
     # Start Flask application
     print("🌐 Starting advanced web dashboard on port 5000...")
-    print("📱 Access your dashboard at:")
-    print("   English: http://localhost:5000/")
-    print("   Arabic:  http://localhost:5000/arabic")
+    print("📱 Access your dashboard at: http://localhost:5000/")
     print("=" * 60)
     
     app.run(host="0.0.0.0", port=5000, debug=True)

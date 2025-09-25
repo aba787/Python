@@ -90,10 +90,7 @@ def after_request(response):
 def dashboard():
     return render_template('index.html')
 
-@app.route('/arabic')
-def arabic_dashboard():
-    """Arabic language dashboard with RTL support"""
-    return render_template('arabic.html')
+
 
 @app.route('/api/alerts')
 def api_alerts():
