@@ -19,6 +19,7 @@ def dashboard():
 
 @app.route('/arabic')
 def arabic_dashboard():
+    """Arabic language dashboard with RTL support"""
     return render_template('arabic.html')
 
 @app.route('/api/alerts')

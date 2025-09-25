@@ -615,10 +615,13 @@
                     alertsData = alerts;
                     displayAlerts(alerts);
                     document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('ar-EG');
+                    document.getElementById('status').textContent = 'النظام نشط';
                 })
                 .catch(error => {
                     console.error('خطأ في جلب التنبيهات:', error);
-                    document.getElementById('status').textContent = 'خطأ في الاتصال';
+                    document.getElementById('status').textContent = 'خطأ في الاتصال - جاري إعادة المحاولة...';
+                    // Retry after 5 seconds
+                    setTimeout(updateAlerts, 5000);
                 });
         }
 
@@ -635,7 +638,14 @@
                     document.getElementById('infoCount').textContent = stats.INFO || 0;
                     updateChart(stats);
                 })
-                .catch(error => console.error('خطأ في جلب الإحصائيات:', error));
+                .catch(error => {
+                    console.error('خطأ في جلب الإحصائيات:', error);
+                    // Show loading state
+                    document.getElementById('highCount').textContent = '...';
+                    document.getElementById('mediumCount').textContent = '...';
+                    document.getElementById('lowCount').textContent = '...';
+                    document.getElementById('infoCount').textContent = '...';
+                });
         }
 
         function displayAlerts(alerts) {
