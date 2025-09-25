@@ -1,0 +1,140 @@
+Full Project Details — A Practical and Straightforward Summary
+
+Here, I give you a detailed description of each part of the project, its function, where it's located in the code, endpoints, database, how to run the demo, known vulnerabilities, and clear next steps. No filler — everything you can implement or hand over to your instructor.
+
+1) Quick Overview
+
+Goal: A simulated cyberattack detection system with a dashboard that displays alerts and real-time statistics. Runs on Replit (a space-constrained environment).
+Main components: Web interface (Flask + HTML/JS), SQLite database for storing alerts, simulated generator/sniffer for generating alerts, inference-ready ML files (optional), demo/scenario visualization tools (demo_trigger).
+
+2) File structure (what you actually have in the project right now — based on what appears in ls)
+
+main.py — Starting point. Initializes the DB, runs the generator/sniffer, and runs Flask.
+
+app.py / dashboard.py — Flask application and API endpoints for the Dashboard interface.
+
+templates/index.html — Front-end (HTML + JS) displaying the alerts table, stats, and chart.
+
+db.py — SQLite management: init, add_alert, get_alerts, get_stats.
+
+network_sniffer.py — Generator/sniffer simulator for experiments (generates random alerts or sequences to simulate attacks).
+
+demo_trigger.py / attack_simulator.py — Scripts for injecting specific scenarios (SQLi, SYN flood, phishing, port scan, malware beacon).
+
+vulnerable_app.py — (Optional) A local vulnerable web application for demonstrating vulnerabilities without executing actual attacks.
+
+ai_model.py, model.pkl, advanced_model.pkl — Ready-to-use ML model files (inference) — Large files that cause space issues.
+
+alerts.db — A SQLite file containing alerts (persistent storage).
+
+.git, .gitignore, requirements.txt, README.md, INSTALLATION.md, USAGE.md — Project related and documentation.
+
+3) Database (SQLite)
+
+File: alerts.db
+Table: alerts
+Schema (according to db.py):
+
+id INTEGER PRIMARY KEY AUTOINCREMENT
+
+level TEXT (INFO/LOW/MEDIUM/HIGH)
+
+message TEXT
+
+timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+
+Functions available in db.py:
+
+init_db() — Creates the table if it doesn't exist.
+
+add_alert(level, message) — Inserts a new alert.
+
+get_alerts(limit=100) — Retrieves the latest alerts (JSON-ready).
+
+get_stats() — Returns an aggregate of alerts by level.
+
+4) Backend — Flask (app.py / dashboard.py)
+
+Important Endpoints:
+
+GET / → Returns templates/index.html (the Dashboard).
+
+GET /api/alerts → JSON list of the most recent alerts (used by the interface to display the table).
+
+GET /api/stats → JSON with simplified statistics (e.g., {"HIGH": 3, "MEDIUM": 5}) to display the chart.
+
+(Optional) POST /api/trigger → An interface to invoke alert injection scenarios from the interface instead of the shell.
+
+(Optional) POST /api/clear → Clears alerts (useful for recursive displays).
+
+Run:
+app.run(host="0.0.0.0", port=3000) inside main.py or dashboard.py.
+
+5) Generator/Sniffer Simulator (network_sniffer.py)
+
+Purpose: Generates data/alerts for testing without sending any packets over the network.
+Typical Behavior:
+
+Runs in a background thread (daemon) via start_sniffer() and calls add_alert() every 3–7 seconds.
+
+Chooses between attack models or normal events with specified percentages (e.g., 30% attack).
+
+Can be disabled or replaced later with Scapy to collect real packets (but this requires an authorized environment).
+
+6) Demo Scripts (demo_trigger.py / attack_simulator.py)
+
+Purpose: Injects ready-made scenarios for presentation to the teacher. Examples:
+
+sql_injection → Inputs a HIGH + MEDIUM alert.
+
+syn_flood → Logs a recurring HIGH wave to alert of a spike.
+
+phishing_email, port_scan, malware_beacon — Each scenario logs sequential or intermittent alerts.
+
+Quick start:
+python demo_trigger.py sql_injection
+Or execute via a UI button that calls /api/trigger.
+
+7) Frontend (templates/index.html)
+
+Common Content:
+
+Alerts table with periodic updates (setInterval every 3 seconds) fetching /api/alerts.
+
+Stats area reads /api/stats.
+
+Graph (Plotly or Chart.js) to display the distribution of types or spikes over time.
+
+Control buttons (Start generator, Clear, button for each scenario) — Bind to /api/trigger or execute a shell script if it is in the endpoint.
+
+8) ML files (ai_model.py, model.pkl, advanced_model.pkl)
+
+ai_model.py includes functions for loading the model (joblib.load("model.pkl") and predicting (features).
+
+Important note: advanced_model.pkl is very large (2MB or larger) and consumes space in Replit. If space is a concern, delete it from Replit and store it externally (Colab, Git LFS, or upload it as a release to GitHub).
+
+For the demonstration, a lightweight model (RandomForest or LogisticRegression) pre-trained on a subset of the dataset (NSL-KDD or CICIDS) is sufficient, then saved as a .pkl and used for inference.
+
+9) Sensitive/Large Files — Space Management
+
+Large files: advanced_model.pkl, model.pkl, .pythonlibs/, __pycache__/, alerts.db may grow over time.
+
+Tips:
+
+Do not add large .pkl files directly to GitHub (use Git LFS or upload them as an external source).
+
+Delete .pythonlibs and __pycache__ before pushing. Add them to .gitignore.
+
+If a Replit crashes due to a Disk quota, delete large files or start a new Replit.
+
+10) Data Flow — Step by Step
+
+Sniffer (or demo_trigger) generates an event → calls db.add_alert(level, message).
+
+The event is stored in alerts.db.
+
+An interface runs fetch('/api/alerts') every 3 seconds and displays the update.
+
+/api/stats provides aggregations plotted by Plotly/Chart.js to illustrate spikes or species distributions.
+
+(Optional) For each event, ai_model.predict(features) can be called to determine the Normal/Attack classification—then the confidence level and model results can be stored in alerts or a separate table.
