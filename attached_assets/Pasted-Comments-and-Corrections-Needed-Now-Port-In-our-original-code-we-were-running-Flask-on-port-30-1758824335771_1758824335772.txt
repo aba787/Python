@@ -1,0 +1,63 @@
+Comments and Corrections Needed Now
+
+Port — In our original code, we were running Flask on port=3000, but you mentioned 5000. You need to verify which port is actually being used:
+
+Open main.py and search for app.run(... port=...).
+
+Or in Replit, open .replit or check the value of the $PORT variable.
+
+If you're presenting to the professor, use the link provided by Replit (it's the correct one), and don't provide a fixed port number unless you're sure of it.
+
+Large files (space problem) — advanced_model.pkl and .pythonlibs/ are already in your system (large).
+
+Recommendation: Don't upload large model files to GitHub or leave them in Replit if they cause disk quota exceeded. Upload them to an external location (Google Drive / Colab / GitHub Releases / S3) and upload them to inference as needed.
+
+Before pushing the repo: Add it to .gitignore or use Git LFS.
+
+Real documentation for "Running" mode — actually make sure every endpoint returns 200. Use these commands to check within the Replit shell:
+
+#1) Confirm which port Flask is running on (search the code)
+sed -n '1,200p' main.py | sed -n '1,200p'
+#2) Test endpoints locally (replace PORT with the correct number or use localhost:3000)
+curl -sS http://127.0.0.1:3000/api/stats | jq .
+curl -sS http://127.0.0.1:3000/api/alerts | jq '.[0]'
+
+(Or open the Replit link in your browser and check directly.)
+
+AI model is probably in "simulation only" mode — ai_model.py exists, but is it actually called when an alert is added? Check ai_model.load() or predict() calls in network_sniffer.py or db.py.
+
+vulnerable_app.py — Don't actually expose the app online if it contains real vulnerabilities. Use it only as a local demo within the project or run it behind a wall/view feature in a test room.
+
+Quick runtime check (3 detailed commands)
+
+Copy and paste into the shell in order. This checks critical points:
+
+#1. Make sure the DB is running and contains records
+sqlite3 alerts.db "SELECT COUNT(*) FROM alerts;"
+
+#2. Check the last alert
+sqlite3 alerts.db "SELECT id, level, message, timestamp FROM alerts ORDER BY id DESC LIMIT 1;"
+
+#3. Check that Flask endpoints are responding (replace 3000 or 5000 with the correct port)
+curl -sS http://127.0.0.1:3000/api/stats | head -n 20
+curl -sS http://127.0.0.1:3000/api/alerts | head -n 40
+
+Additional points to include in the final report
+
+Data sources: Were the models trained on NSL-KDD / CICIDS? Specify. If the models were not trained on real data, clearly state "simulation/inference only".
+
+System limitations: Replit's space, not using heavy training packages (TensorFlow/PyTorch) locally, and the need for Colab or a training server.
+
+Legal safety: Ensure that vulnerable_app.py and demo_trigger are only running as simulations and that you won't run real attacks.
+
+Finally — an immediate action recommendation (two steps you can take now)
+
+Check the port: Open main.py and modify the report to match the correct port number (3000 or 5000).
+
+Clean before uploading: Remove .pythonlibs, advanced_model.pkl from Replit (or move them externally). Run:
+
+rm -rf .pythonlibs
+git add .gitignore
+git commit -m "Remove heavy files, update .gitignore"
+
+Then push to update the repo.
