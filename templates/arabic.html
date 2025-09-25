@@ -480,7 +480,10 @@
 
         function updateAlerts() {
             fetch('/api/alerts')
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
                 .then(alerts => {
                     alertsData = alerts;
                     displayAlerts(alerts);
@@ -494,7 +497,10 @@
 
         function updateStats() {
             fetch('/api/stats')
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
                 .then(stats => {
                     document.getElementById('highCount').textContent = stats.HIGH || 0;
                     document.getElementById('mediumCount').textContent = stats.MEDIUM || 0;
