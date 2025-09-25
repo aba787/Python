@@ -5,19 +5,36 @@ import demo_trigger
 
 app = Flask(__name__)
 
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE')
+    return response
+
 @app.route('/')
 def dashboard():
     return render_template('index.html')
 
 @app.route('/api/alerts')
 def api_alerts():
-    alerts = get_alerts()
-    return jsonify(alerts)
+    try:
+        alerts = get_alerts()
+        print(f"API returning {len(alerts)} alerts")
+        return jsonify(alerts)
+    except Exception as e:
+        print(f"Error in api_alerts: {e}")
+        return jsonify([]), 500
 
 @app.route('/api/stats')
 def api_stats():
-    stats = get_stats()
-    return jsonify(stats)
+    try:
+        stats = get_stats()
+        print(f"API returning stats: {stats}")
+        return jsonify(stats)
+    except Exception as e:
+        print(f"Error in api_stats: {e}")
+        return jsonify({}), 500
 
 @app.route('/api/trigger', methods=['POST'])
 def api_trigger():
