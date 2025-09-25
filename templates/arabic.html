@@ -1,0 +1,662 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم كشف الهجمات السيبرانية</title>
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Cairo', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            background: linear-gradient(45deg, #16213e, #0f3460);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid #2d4a87;
+        }
+        
+        .header h1 {
+            color: #ff6b6b;
+            margin-bottom: 15px;
+            font-size: 2.5rem;
+            font-weight: 900;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            color: #a0c4ff;
+            font-weight: 300;
+        }
+        
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: linear-gradient(45deg, #1e3c72, #2a5298);
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+        
+        .status-icon {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #2ed573;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(46, 213, 115, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(46, 213, 115, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(46, 213, 115, 0); }
+        }
+        
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .btn {
+            padding: 15px 20px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(45deg, #ff4757, #ff3838);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4);
+        }
+        
+        .btn-warning {
+            background: linear-gradient(45deg, #ffa502, #ff9500);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 165, 2, 0.4);
+        }
+        
+        .btn-info {
+            background: linear-gradient(45deg, #3742fa, #2f32fa);
+            color: white;
+            box-shadow: 0 4px 15px rgba(55, 66, 250, 0.4);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(45deg, #747d8c, #57606f);
+            color: white;
+            box-shadow: 0 4px 15px rgba(116, 125, 140, 0.4);
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .panel {
+            background: linear-gradient(145deg, #1e2139, #252746);
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid #3d4465;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            position: relative;
+        }
+        
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4);
+            border-radius: 20px 20px 0 0;
+        }
+        
+        .panel h3 {
+            margin-bottom: 25px;
+            color: #a0c4ff;
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #2d3748, #4a5568);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            border: 1px solid #4a5568;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+        }
+        
+        .stat-card:hover::before {
+            opacity: 1;
+        }
+        
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 900;
+            margin-bottom: 10px;
+        }
+        
+        .stat-label {
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .stat-high { color: #ff4757; }
+        .stat-medium { color: #ffa502; }
+        .stat-low { color: #2ed573; }
+        .stat-info { color: #70a1ff; }
+        
+        .alerts-section {
+            background: linear-gradient(145deg, #1e2139, #252746);
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid #3d4465;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+        
+        .alerts-header {
+            background: linear-gradient(45deg, #2d3748, #4a5568);
+            padding: 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .alerts-header h3 {
+            color: #a0c4ff;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0;
+        }
+        
+        .alerts-table {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 15px 20px;
+            text-align: right;
+            border-bottom: 1px solid #3d4465;
+        }
+        
+        th {
+            background: linear-gradient(45deg, #2d3748, #4a5568);
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #a0c4ff;
+            position: sticky;
+            top: 0;
+        }
+        
+        tr:hover {
+            background: rgba(255,255,255,0.05);
+        }
+        
+        .level-HIGH {
+            color: #ff4757;
+            font-weight: 700;
+            text-shadow: 0 0 10px rgba(255, 71, 87, 0.5);
+        }
+        
+        .level-MEDIUM {
+            color: #ffa502;
+            font-weight: 700;
+            text-shadow: 0 0 10px rgba(255, 165, 2, 0.5);
+        }
+        
+        .level-LOW {
+            color: #2ed573;
+            font-weight: 600;
+        }
+        
+        .level-INFO {
+            color: #70a1ff;
+            font-weight: 600;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #a0c4ff;
+        }
+        
+        .spinner {
+            border: 4px solid #3d4465;
+            border-top: 4px solid #70a1ff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            .controls {
+                grid-template-columns: 1fr;
+            }
+            .status-bar {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(45deg, #2ed573, #26d65c);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-weight: 600;
+            box-shadow: 0 5px 20px rgba(46, 213, 115, 0.3);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .notification.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-shield-alt"></i> لوحة تحكم كشف الهجمات السيبرانية</h1>
+            <p>نظام مراقبة الأمان في الوقت الفعلي مدعوم بالذكاء الاصطناعي</p>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="status-icon"></div>
+                <strong>الحالة:</strong> <span id="status">النظام نشط</span>
+            </div>
+            <div class="status-item">
+                <i class="fas fa-clock"></i>
+                <strong>آخر تحديث:</strong> <span id="lastUpdate">لم يتم التحديث بعد</span>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-danger" onclick="triggerScenario('sql_injection')">
+                <i class="fas fa-database"></i> هجوم حقن SQL
+            </button>
+            <button class="btn btn-danger" onclick="triggerScenario('syn_flood')">
+                <i class="fas fa-flood"></i> هجوم SYN Flood
+            </button>
+            <button class="btn btn-warning" onclick="triggerScenario('phishing_email')">
+                <i class="fas fa-envelope"></i> بريد تصيد
+            </button>
+            <button class="btn btn-warning" onclick="triggerScenario('port_scan')">
+                <i class="fas fa-search"></i> مسح المنافذ
+            </button>
+            <button class="btn btn-danger" onclick="triggerScenario('malware_beacon')">
+                <i class="fas fa-virus"></i> إشارة برمجية خبيثة
+            </button>
+            <button class="btn btn-secondary" onclick="clearAlerts()">
+                <i class="fas fa-trash"></i> مسح التنبيهات
+            </button>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="panel">
+                <h3><i class="fas fa-chart-bar"></i> إحصائيات التنبيهات</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number stat-high" id="highCount">0</div>
+                        <div class="stat-label">عالي</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number stat-medium" id="mediumCount">0</div>
+                        <div class="stat-label">متوسط</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number stat-low" id="lowCount">0</div>
+                        <div class="stat-label">منخفض</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number stat-info" id="infoCount">0</div>
+                        <div class="stat-label">معلومات</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3><i class="fas fa-chart-pie"></i> توزيع التنبيهات</h3>
+                <div id="alertChart"></div>
+            </div>
+        </div>
+
+        <div class="alerts-section">
+            <div class="alerts-header">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3>التنبيهات الأخيرة</h3>
+            </div>
+            <div class="alerts-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>الوقت</th>
+                            <th>المستوى</th>
+                            <th>الرسالة</th>
+                        </tr>
+                    </thead>
+                    <tbody id="alertsTableBody">
+                        <tr>
+                            <td colspan="3" class="loading">
+                                <div class="spinner"></div>
+                                جاري تحميل التنبيهات...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script>
+        let alertsData = [];
+
+        function updateAlerts() {
+            fetch('/api/alerts')
+                .then(response => response.json())
+                .then(alerts => {
+                    alertsData = alerts;
+                    displayAlerts(alerts);
+                    document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('ar-EG');
+                })
+                .catch(error => {
+                    console.error('خطأ في جلب التنبيهات:', error);
+                    document.getElementById('status').textContent = 'خطأ في الاتصال';
+                });
+        }
+
+        function updateStats() {
+            fetch('/api/stats')
+                .then(response => response.json())
+                .then(stats => {
+                    document.getElementById('highCount').textContent = stats.HIGH || 0;
+                    document.getElementById('mediumCount').textContent = stats.MEDIUM || 0;
+                    document.getElementById('lowCount').textContent = stats.LOW || 0;
+                    document.getElementById('infoCount').textContent = stats.INFO || 0;
+                    updateChart(stats);
+                })
+                .catch(error => console.error('خطأ في جلب الإحصائيات:', error));
+        }
+
+        function displayAlerts(alerts) {
+            const tbody = document.getElementById('alertsTableBody');
+            if (alerts.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="loading">لا توجد تنبيهات</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = alerts.map(alert => {
+                const time = new Date(alert.timestamp).toLocaleTimeString('ar-EG');
+                return `
+                    <tr>
+                        <td>${time}</td>
+                        <td><span class="level-${alert.level}">${translateLevel(alert.level)}</span></td>
+                        <td>${translateMessage(alert.message)}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function translateLevel(level) {
+            const translations = {
+                'HIGH': 'عالي',
+                'MEDIUM': 'متوسط',
+                'LOW': 'منخفض',
+                'INFO': 'معلومات'
+            };
+            return translations[level] || level;
+        }
+
+        function translateMessage(message) {
+            const translations = {
+                'SQL Injection detected': 'تم اكتشاف هجوم حقن SQL',
+                'SYN Flood attack detected': 'تم اكتشاف هجوم SYN Flood',
+                'Phishing email detected': 'تم اكتشاف بريد تصيد',
+                'Port scanning detected': 'تم اكتشاف مسح للمنافذ',
+                'Malware beacon detected': 'تم اكتشاف إشارة برمجية خبيثة',
+                'Normal network traffic': 'حركة شبكة طبيعية',
+                'Suspicious activity detected': 'تم اكتشاف نشاط مشبوه',
+                'Attack detected': 'تم اكتشاف هجوم'
+            };
+            
+            for (let key in translations) {
+                if (message.includes(key)) {
+                    return message.replace(key, translations[key]);
+                }
+            }
+            return message;
+        }
+
+        function updateChart(stats) {
+            const arabicLabels = {
+                'HIGH': 'عالي',
+                'MEDIUM': 'متوسط',
+                'LOW': 'منخفض',
+                'INFO': 'معلومات'
+            };
+
+            const data = [{
+                values: Object.values(stats),
+                labels: Object.keys(stats).map(key => arabicLabels[key]),
+                type: 'pie',
+                marker: {
+                    colors: ['#ff4757', '#ffa502', '#2ed573', '#70a1ff']
+                },
+                textinfo: 'label+percent',
+                textfont: {
+                    size: 14,
+                    color: 'white',
+                    family: 'Cairo'
+                }
+            }];
+
+            const layout = {
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                font: { 
+                    color: '#ffffff',
+                    family: 'Cairo',
+                    size: 14
+                },
+                margin: { t: 10, b: 10, l: 10, r: 10 },
+                showlegend: true,
+                legend: {
+                    orientation: "v",
+                    x: 1.02,
+                    y: 0.5
+                }
+            };
+
+            Plotly.newPlot('alertChart', data, layout, {displayModeBar: false});
+        }
+
+        function triggerScenario(scenario) {
+            fetch('/api/trigger', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({scenario: scenario})
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    const scenarioNames = {
+                        'sql_injection': 'هجوم حقن SQL',
+                        'syn_flood': 'هجوم SYN Flood',
+                        'phishing_email': 'بريد تصيد',
+                        'port_scan': 'مسح المنافذ',
+                        'malware_beacon': 'إشارة برمجية خبيثة'
+                    };
+                    
+                    showNotification(`تم تشغيل سيناريو: ${scenarioNames[scenario]}`);
+                    document.getElementById('status').textContent = `تم تشغيل: ${scenarioNames[scenario]}`;
+                    setTimeout(() => {
+                        updateAlerts();
+                        updateStats();
+                    }, 1000);
+                }
+            })
+            .catch(error => console.error('خطأ في تشغيل السيناريو:', error));
+        }
+
+        function clearAlerts() {
+            fetch('/api/clear', {method: 'POST'})
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        updateAlerts();
+                        updateStats();
+                        showNotification('تم مسح التنبيهات بنجاح');
+                        document.getElementById('status').textContent = 'تم مسح التنبيهات';
+                    }
+                })
+                .catch(error => console.error('خطأ في مسح التنبيهات:', error));
+        }
+
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // تحديث البيانات كل 3 ثواني
+        setInterval(() => {
+            updateAlerts();
+            updateStats();
+        }, 3000);
+
+        // التحميل الأولي
+        updateAlerts();
+        updateStats();
+    </script>
+</body>
+</html>
