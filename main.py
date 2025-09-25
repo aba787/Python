@@ -39,7 +39,7 @@ def main():
     print("   ✓ APT detection capabilities")
     print("   ✓ Smart alert correlation")
     print("   ✓ Threat hunting APIs")
-    print("   ✓ Arabic language support")
+    print("   ")
     print("=" * 60)
     
     # Start Flask application

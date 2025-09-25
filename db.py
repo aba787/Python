@@ -1,4 +1,3 @@
-
 import sqlite3
 import psycopg2
 import os
@@ -19,7 +18,7 @@ class DatabaseManager:
             self.init_postgres_db()
         else:
             self.init_sqlite_db()
-    
+
     def get_connection(self):
         """Get database connection"""
         if self.use_postgres:
@@ -28,13 +27,13 @@ class DatabaseManager:
             conn = sqlite3.connect(DATABASE)
             conn.row_factory = sqlite3.Row
             return conn
-    
+
     def init_postgres_db(self):
         """Initialize PostgreSQL database"""
         try:
             conn = psycopg2.connect(self.connection_params)
             cursor = conn.cursor()
-            
+
             # Create alerts table
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS alerts (
@@ -54,7 +53,7 @@ class DatabaseManager:
                     false_positive BOOLEAN DEFAULT FALSE
                 )
             ''')
-            
+
             # Create threat intelligence table
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS threat_intelligence (
@@ -69,7 +68,7 @@ class DatabaseManager:
                     UNIQUE(indicator, indicator_type)
                 )
             ''')
-            
+
             # Create correlation rules table
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS correlation_rules (
@@ -83,7 +82,7 @@ class DatabaseManager:
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
-            
+
             # Create incident table
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS incidents (
@@ -98,28 +97,28 @@ class DatabaseManager:
                     resolved_at TIMESTAMP
                 )
             ''')
-            
+
             # Create indexes for performance
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_alerts_timestamp ON alerts(timestamp)')
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_alerts_level ON alerts(level)')
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_alerts_source_ip ON alerts(source_ip)')
             cursor.execute('CREATE INDEX IF NOT EXISTS idx_threat_intel_indicator ON threat_intelligence(indicator)')
-            
+
             conn.commit()
             conn.close()
             print("PostgreSQL database initialized successfully")
-            
+
         except Exception as e:
             print(f"Error initializing PostgreSQL: {e}")
             # Fallback to SQLite
             self.use_postgres = False
             self.init_sqlite_db()
-    
+
     def init_sqlite_db(self):
         """Initialize SQLite database"""
         conn = sqlite3.connect(DATABASE)
         cursor = conn.cursor()
-        
+
         # Create enhanced alerts table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS alerts (
@@ -139,7 +138,7 @@ class DatabaseManager:
                 false_positive INTEGER DEFAULT 0
             )
         ''')
-        
+
         # Create threat intelligence table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS threat_intelligence (
@@ -154,7 +153,7 @@ class DatabaseManager:
                 UNIQUE(indicator, indicator_type)
             )
         ''')
-        
+
         # Create correlation rules table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS correlation_rules (
@@ -168,7 +167,7 @@ class DatabaseManager:
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         ''')
-        
+
         # Create incident table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS incidents (
@@ -183,7 +182,7 @@ class DatabaseManager:
                 resolved_at DATETIME
             )
         ''')
-        
+
         conn.commit()
         conn.close()
         print("SQLite database initialized successfully")
@@ -202,7 +201,7 @@ def add_alert(level, message, source_ip=None, destination_ip=None, protocol=None
     try:
         conn = db_manager.get_connection()
         cursor = conn.cursor()
-        
+
         if db_manager.use_postgres:
             cursor.execute('''
                 INSERT INTO alerts (level, message, source_ip, destination_ip, protocol, 
@@ -211,16 +210,21 @@ def add_alert(level, message, source_ip=None, destination_ip=None, protocol=None
             ''', (level, message, source_ip, destination_ip, protocol, port, 
                  confidence, threat_type, anomaly_score, correlation_id))
         else:
+            # Convert numpy types to Python types
+            if confidence is not None:
+                confidence = float(confidence)
+            if port is not None:
+                port = int(port)
             cursor.execute('''
                 INSERT INTO alerts (level, message, source_ip, destination_ip, protocol,
                                   port, confidence, threat_type, anomaly_score, correlation_id)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (level, message, source_ip, destination_ip, protocol, port,
                  confidence, threat_type, anomaly_score, correlation_id))
-        
+
         conn.commit()
         conn.close()
-        
+
     except Exception as e:
         print(f"Error adding alert: {e}")
 
@@ -229,10 +233,10 @@ def get_alerts(limit=100, filters=None):
     try:
         conn = db_manager.get_connection()
         cursor = conn.cursor()
-        
+
         query = "SELECT * FROM alerts"
         params = []
-        
+
         if filters:
             conditions = []
             if filters.get('level'):
@@ -244,17 +248,17 @@ def get_alerts(limit=100, filters=None):
             if filters.get('end_time'):
                 conditions.append("timestamp <= %s" if db_manager.use_postgres else "timestamp <= ?")
                 params.append(filters['end_time'])
-            
+
             if conditions:
                 query += " WHERE " + " AND ".join(conditions)
-        
+
         query += " ORDER BY timestamp DESC"
         if limit:
             query += f" LIMIT {limit}"
-        
+
         cursor.execute(query, params)
         rows = cursor.fetchall()
-        
+
         alerts = []
         for row in rows:
             if db_manager.use_postgres:
@@ -278,10 +282,10 @@ def get_alerts(limit=100, filters=None):
                     'acknowledged': row['acknowledged'], 'false_positive': row['false_positive']
                 }
             alerts.append(alert)
-        
+
         conn.close()
         return alerts
-        
+
     except Exception as e:
         print(f"Error getting alerts: {e}")
         return []
@@ -291,31 +295,31 @@ def get_stats():
     try:
         conn = db_manager.get_connection()
         cursor = conn.cursor()
-        
+
         # Basic level stats
         cursor.execute("SELECT level, COUNT(*) as count FROM alerts GROUP BY level")
         results = cursor.fetchall()
-        
+
         stats = {}
         for result in results:
             if db_manager.use_postgres:
                 stats[result[0]] = result[1]
             else:
                 stats[result[0]] = result[1]
-        
+
         # Add threat type stats
         cursor.execute("SELECT threat_type, COUNT(*) as count FROM alerts WHERE threat_type IS NOT NULL GROUP BY threat_type")
         threat_results = cursor.fetchall()
-        
+
         threat_stats = {}
         for result in threat_results:
             if db_manager.use_postgres:
                 threat_stats[result[0]] = result[1]
             else:
                 threat_stats[result[0]] = result[1]
-        
+
         stats['threat_types'] = threat_stats
-        
+
         # Add time-based stats (last 24 hours)
         yesterday = datetime.now() - timedelta(days=1)
         cursor.execute(
@@ -324,10 +328,10 @@ def get_stats():
             (yesterday,)
         )
         stats['last_24h'] = cursor.fetchone()[0]
-        
+
         conn.close()
         return stats
-        
+
     except Exception as e:
         print(f"Error getting stats: {e}")
         return {}
@@ -337,7 +341,7 @@ def add_threat_intelligence(indicator, indicator_type, threat_type, confidence, 
     try:
         conn = db_manager.get_connection()
         cursor = conn.cursor()
-        
+
         if db_manager.use_postgres:
             cursor.execute('''
                 INSERT INTO threat_intelligence (indicator, indicator_type, threat_type, confidence, source)
@@ -353,10 +357,10 @@ def add_threat_intelligence(indicator, indicator_type, threat_type, confidence, 
                 (indicator, indicator_type, threat_type, confidence, source)
                 VALUES (?, ?, ?, ?, ?)
             ''', (indicator, indicator_type, threat_type, confidence, source))
-        
+
         conn.commit()
         conn.close()
-        
+
     except Exception as e:
         print(f"Error adding threat intelligence: {e}")
 
@@ -365,17 +369,17 @@ def check_threat_intelligence(indicator, indicator_type):
     try:
         conn = db_manager.get_connection()
         cursor = conn.cursor()
-        
+
         cursor.execute(
             "SELECT * FROM threat_intelligence WHERE indicator = %s AND indicator_type = %s" 
             if db_manager.use_postgres else
             "SELECT * FROM threat_intelligence WHERE indicator = ? AND indicator_type = ?",
             (indicator, indicator_type)
         )
-        
+
         result = cursor.fetchone()
         conn.close()
-        
+
         if result:
             if db_manager.use_postgres:
                 return {
@@ -390,7 +394,7 @@ def check_threat_intelligence(indicator, indicator_type):
                     'source': result['source']
                 }
         return None
-        
+
     except Exception as e:
         print(f"Error checking threat intelligence: {e}")
         return None
