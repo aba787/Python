@@ -1,0 +1,559 @@
+
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام الذكي الاصطناعي لكشف الهجمات السيبرانية - عرض توضيحي</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        
+        .floating-balloon {
+            position: fixed;
+            width: 50px;
+            height: 70px;
+            background: radial-gradient(circle at 30% 30%, #87CEEB, #4682B4);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            animation: float 6s ease-in-out infinite;
+            z-index: 1;
+        }
+        
+        .floating-balloon:nth-child(1) { top: 10%; left: 5%; animation-delay: 0s; }
+        .floating-balloon:nth-child(2) { top: 20%; right: 8%; animation-delay: 2s; }
+        .floating-balloon:nth-child(3) { top: 60%; left: 3%; animation-delay: 4s; }
+        .floating-balloon:nth-child(4) { top: 70%; right: 5%; animation-delay: 6s; }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+        }
+        
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            backdrop-filter: blur(15px);
+            margin: 20px;
+            padding: 30px;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .threat-high { border-left: 5px solid #dc3545; }
+        .threat-medium { border-left: 5px solid #fd7e14; }
+        .threat-low { border-left: 5px solid #198754; }
+        
+        .scenario-btn {
+            margin: 5px;
+            border-radius: 25px;
+            padding: 10px 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .scenario-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .alert-row {
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        
+        .alert-row:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+        }
+        
+        .control-panel {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-left: 5px;
+        }
+        
+        .status-online { background-color: #28a745; }
+        .status-offline { background-color: #dc3545; }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Floating Balloons -->
+    <div class="floating-balloon"></div>
+    <div class="floating-balloon"></div>
+    <div class="floating-balloon"></div>
+    <div class="floating-balloon"></div>
+    
+    <div class="main-container">
+        <!-- Header -->
+        <div class="text-center mb-4">
+            <h1 class="display-4">🛡️ نظام الذكي الاصطناعي لكشف الهجمات السيبرانية</h1>
+            <p class="lead">عرض توضيحي تفاعلي لنظام المراقبة والحماية</p>
+            <div class="badge bg-success">
+                نظام نشط <span class="status-indicator status-online" id="systemStatus"></span>
+            </div>
+        </div>
+        
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <h3>🎮 لوحة التحكم - سيناريوهات العرض التوضيحي</h3>
+            <p class="mb-3">اختر سيناريو هجوم لمشاهدة استجابة النظام الفورية:</p>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <button class="btn btn-danger scenario-btn" onclick="runScenario('sqli')">
+                        💉 هجوم حقن SQL
+                    </button>
+                    <button class="btn btn-warning scenario-btn" onclick="runScenario('syn_flood')">
+                        🌊 هجوم SYN Flood
+                    </button>
+                    <button class="btn btn-info scenario-btn" onclick="runScenario('phishing')">
+                        🎣 هجوم تصيد إلكتروني
+                    </button>
+                </div>
+                <div class="col-md-6">
+                    <button class="btn btn-secondary scenario-btn" onclick="runScenario('port_scan')">
+                        🔍 مسح المنافذ
+                    </button>
+                    <button class="btn btn-dark scenario-btn" onclick="runScenario('malware')">
+                        🦠 برمجيات خبيثة
+                    </button>
+                    <button class="btn btn-success scenario-btn" onclick="toggleBackgroundGenerator()" id="backgroundBtn">
+                        🔄 مولد التنبيهات التلقائي
+                    </button>
+                </div>
+            </div>
+            
+            <div class="mt-3">
+                <button class="btn btn-outline-danger" onclick="clearAllAlerts()">
+                    🗑️ مسح جميع التنبيهات
+                </button>
+                <button class="btn btn-outline-primary" onclick="refreshData()">
+                    🔄 تحديث البيانات
+                </button>
+            </div>
+        </div>
+        
+        <!-- Statistics Row -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="card stats-card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-graph-up"></i> إحصائيات الهجمات (آخر 5 دقائق)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="attackChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5><i class="bi bi-speedometer2"></i> مستويات التهديد</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="threatChart"></canvas>
+                        </div>
+                        <div class="mt-3">
+                            <div class="d-flex justify-content-between">
+                                <span class="badge bg-danger" id="highCount">عالي: 0</span>
+                                <span class="badge bg-warning" id="mediumCount">متوسط: 0</span>
+                                <span class="badge bg-success" id="lowCount">منخفض: 0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Alerts Table -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5><i class="bi bi-shield-exclamation"></i> سجل التنبيهات المباشر</h5>
+                        <span class="badge bg-info" id="alertCount">0 تنبيه</span>
+                    </div>
+                    <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>الوقت</th>
+                                        <th>مستوى التهديد</th>
+                                        <th>نوع الهجوم</th>
+                                        <th>الرسالة</th>
+                                        <th>المصدر</th>
+                                        <th>الثقة</th>
+                                        <th>إجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="alertsTable">
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted">
+                                            🔍 لا توجد تنبيهات حاليًا... اضغط على أحد السيناريوهات للبدء
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Links to other components -->
+        <div class="row mt-4">
+            <div class="col-12 text-center">
+                <div class="card">
+                    <div class="card-body">
+                        <h5>🔗 روابط مفيدة للعرض التوضيحي</h5>
+                        <a href="http://0.0.0.0:3000" target="_blank" class="btn btn-outline-danger">
+                            🎯 التطبيق الضعيف للاختبار
+                        </a>
+                        <a href="#" onclick="showInfo()" class="btn btn-outline-info">
+                            ℹ️ معلومات النظام
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Alert Details Modal -->
+    <div class="modal fade" id="alertModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">تفاصيل التنبيه</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="alertModalBody">
+                    <!-- Alert details will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let attackChart, threatChart;
+        let backgroundGeneratorRunning = false;
+        
+        // Initialize charts
+        function initCharts() {
+            // Attack Types Chart
+            const attackCtx = document.getElementById('attackChart').getContext('2d');
+            attackChart = new Chart(attackCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'عدد الهجمات',
+                        data: [],
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.8)',
+                            'rgba(54, 162, 235, 0.8)',
+                            'rgba(255, 205, 86, 0.8)',
+                            'rgba(75, 192, 192, 0.8)',
+                            'rgba(153, 102, 255, 0.8)',
+                            'rgba(255, 159, 64, 0.8)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+            
+            // Threat Levels Chart
+            const threatCtx = document.getElementById('threatChart').getContext('2d');
+            threatChart = new Chart(threatCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['عالي', 'متوسط', 'منخفض'],
+                    datasets: [{
+                        data: [0, 0, 0],
+                        backgroundColor: ['#dc3545', '#fd7e14', '#198754']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+        
+        // Load alerts from server
+        function loadAlerts() {
+            fetch('/alerts')
+                .then(response => response.json())
+                .then(alerts => {
+                    const tbody = document.getElementById('alertsTable');
+                    tbody.innerHTML = '';
+                    
+                    if (alerts.length === 0) {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="7" class="text-center text-muted">
+                                    🔍 لا توجد تنبيهات حاليًا... اضغط على أحد السيناريوهات للبدء
+                                </td>
+                            </tr>
+                        `;
+                    } else {
+                        alerts.forEach(alert => {
+                            const row = document.createElement('tr');
+                            row.className = `alert-row threat-${alert.threat_level.toLowerCase()}`;
+                            row.onclick = () => showAlertDetails(alert.id);
+                            
+                            const threatBadge = {
+                                'HIGH': 'bg-danger',
+                                'MEDIUM': 'bg-warning',
+                                'LOW': 'bg-success'
+                            }[alert.threat_level] || 'bg-secondary';
+                            
+                            row.innerHTML = `
+                                <td>${new Date(alert.timestamp).toLocaleString('ar-SA')}</td>
+                                <td><span class="badge ${threatBadge}">${alert.threat_level}</span></td>
+                                <td>${alert.attack_type}</td>
+                                <td>${alert.message}</td>
+                                <td>${alert.source_ip}</td>
+                                <td>${(alert.confidence * 100).toFixed(1)}%</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="showAlertDetails(${alert.id})">
+                                        تفاصيل
+                                    </button>
+                                </td>
+                            `;
+                            tbody.appendChild(row);
+                        });
+                    }
+                    
+                    document.getElementById('alertCount').textContent = `${alerts.length} تنبيه`;
+                })
+                .catch(error => console.error('Error loading alerts:', error));
+        }
+        
+        // Load statistics
+        function loadStats() {
+            fetch('/stats')
+                .then(response => response.json())
+                .then(stats => {
+                    // Update attack types chart
+                    const attackTypes = Object.keys(stats.attack_types);
+                    const attackCounts = Object.values(stats.attack_types);
+                    
+                    attackChart.data.labels = attackTypes;
+                    attackChart.data.datasets[0].data = attackCounts;
+                    attackChart.update();
+                    
+                    // Update threat levels chart
+                    const threatCounts = [
+                        stats.threat_levels.HIGH,
+                        stats.threat_levels.MEDIUM,
+                        stats.threat_levels.LOW
+                    ];
+                    
+                    threatChart.data.datasets[0].data = threatCounts;
+                    threatChart.update();
+                    
+                    // Update badges
+                    document.getElementById('highCount').textContent = `عالي: ${stats.threat_levels.HIGH}`;
+                    document.getElementById('mediumCount').textContent = `متوسط: ${stats.threat_levels.MEDIUM}`;
+                    document.getElementById('lowCount').textContent = `منخفض: ${stats.threat_levels.LOW}`;
+                })
+                .catch(error => console.error('Error loading stats:', error));
+        }
+        
+        // Run attack scenario
+        function runScenario(scenario) {
+            fetch(`/scenario/${scenario}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        showNotification(`✅ تم تنفيذ سيناريو ${scenario} بنجاح!`, 'success');
+                        setTimeout(() => {
+                            loadAlerts();
+                            loadStats();
+                        }, 1000);
+                    } else {
+                        showNotification(`❌ خطأ في تنفيذ السيناريو: ${result.message}`, 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error running scenario:', error);
+                    showNotification('❌ خطأ في الاتصال بالخادم', 'danger');
+                });
+        }
+        
+        // Toggle background generator
+        function toggleBackgroundGenerator() {
+            const action = backgroundGeneratorRunning ? 'stop' : 'start';
+            
+            fetch('/background_generator', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: action })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    backgroundGeneratorRunning = !backgroundGeneratorRunning;
+                    const btn = document.getElementById('backgroundBtn');
+                    btn.textContent = backgroundGeneratorRunning ? '⏹️ إيقاف المولد التلقائي' : '🔄 مولد التنبيهات التلقائي';
+                    btn.className = backgroundGeneratorRunning ? 'btn btn-outline-danger scenario-btn' : 'btn btn-success scenario-btn';
+                    showNotification(result.message, 'info');
+                }
+            })
+            .catch(error => console.error('Error toggling background generator:', error));
+        }
+        
+        // Clear all alerts
+        function clearAllAlerts() {
+            if (confirm('هل أنت متأكد من حذف جميع التنبيهات؟')) {
+                fetch('/clear_alerts', { method: 'POST' })
+                    .then(response => response.json())
+                    .then(result => {
+                        if (result.success) {
+                            showNotification('✅ تم حذف جميع التنبيهات', 'success');
+                            loadAlerts();
+                            loadStats();
+                        }
+                    })
+                    .catch(error => console.error('Error clearing alerts:', error));
+            }
+        }
+        
+        // Show alert details
+        function showAlertDetails(alertId) {
+            fetch(`/alert_details/${alertId}`)
+                .then(response => response.json())
+                .then(alert => {
+                    const modalBody = document.getElementById('alertModalBody');
+                    modalBody.innerHTML = `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>معلومات أساسية:</h6>
+                                <p><strong>نوع الهجوم:</strong> ${alert.attack_type}</p>
+                                <p><strong>مستوى التهديد:</strong> 
+                                    <span class="badge bg-${alert.threat_level === 'HIGH' ? 'danger' : alert.threat_level === 'MEDIUM' ? 'warning' : 'success'}">
+                                        ${alert.threat_level}
+                                    </span>
+                                </p>
+                                <p><strong>الثقة:</strong> ${(alert.confidence * 100).toFixed(1)}%</p>
+                                <p><strong>عنوان IP المصدر:</strong> ${alert.source_ip}</p>
+                                <p><strong>الوقت:</strong> ${new Date(alert.timestamp).toLocaleString('ar-SA')}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>تفاصيل إضافية:</h6>
+                                <p><strong>الوصف:</strong> ${alert.details.description}</p>
+                                <p><strong>التوصية:</strong> ${alert.details.recommendation}</p>
+                                <p><strong>احتمالية الإيجابية الخاطئة:</strong> ${alert.details.false_positive_likelihood}</p>
+                            </div>
+                        </div>
+                        <hr>
+                        <h6>الرسالة الكاملة:</h6>
+                        <pre class="bg-light p-3 rounded">${alert.full_message}</pre>
+                    `;
+                    
+                    new bootstrap.Modal(document.getElementById('alertModal')).show();
+                })
+                .catch(error => console.error('Error loading alert details:', error));
+        }
+        
+        // Show notification
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 300px;';
+            notification.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+        
+        // Show system info
+        function showInfo() {
+            alert(`🛡️ نظام الذكي الاصطناعي لكشف الهجمات السيبرانية
+
+هذا النظام يستخدم تقنيات الذكاء الاصطناعي لمراقبة الشبكة وكشف الهجمات السيبرانية في الوقت الفعلي.
+
+المميزات:
+✅ كشف هجمات SQL Injection
+✅ رصد هجمات DoS/DDoS
+✅ تحليل أنماط حركة الشبكة
+✅ تصنيف مستويات التهديد
+✅ إنذارات فورية
+
+تم تطويره لأغراض تعليمية وأمنية.`);
+        }
+        
+        // Refresh data
+        function refreshData() {
+            loadAlerts();
+            loadStats();
+            showNotification('🔄 تم تحديث البيانات', 'info');
+        }
+        
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initCharts();
+            loadAlerts();
+            loadStats();
+            
+            // Auto-refresh every 30 seconds
+            setInterval(() => {
+                loadAlerts();
+                loadStats();
+            }, 30000);
+        });
+    </script>
+</body>
+</html>
